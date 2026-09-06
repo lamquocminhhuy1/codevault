@@ -2,6 +2,13 @@
 
 {% block title %}Dependencies · {{ project.name }} · CodeVault{% endblock %}
 
+{% block extra_head %}
+  {% if layout == 'graph' %}
+    {% load static %}
+    <script src="{% static 'vendor/cytoscape/cytoscape.min.js' %}"></script>
+  {% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="breadcrumb">
   <a href="{% url 'project_list' %}">Projects</a> <span class="sep">/</span>
@@ -12,11 +19,13 @@
 <div class="page-head">
   <h1>Dependency tree</h1>
   <div class="detail-actions">
-    <span class="searchbox">
-      <input type="text" id="deps-filter" placeholder="Filter scripts..." autocomplete="off">
-    </span>
-    <button type="button" id="tree-expand-all" class="btn secondary small">Expand all</button>
-    <button type="button" id="tree-collapse-all" class="btn secondary small">Collapse all</button>
+    {% if layout != 'graph' %}
+      <span class="searchbox">
+        <input type="text" id="deps-filter" placeholder="Filter scripts..." autocomplete="off">
+      </span>
+      <button type="button" id="tree-expand-all" class="btn secondary small">Expand all</button>
+      <button type="button" id="tree-collapse-all" class="btn secondary small">Collapse all</button>
+    {% endif %}
     <form method="post" style="margin:0">
       {% csrf_token %}
       <button class="btn secondary" type="submit" title="Rescan all scripts in this project for calls to each other's identifiers">&#8635; Rescan</button>
@@ -29,54 +38,88 @@
   <a class="tab-link active" href="{% url 'project_dependencies' project.slug %}">Dependency tree</a>
 </div>
 
-<div class="filters" style="margin-bottom:14px">
+<div class="filters" style="margin-bottom:14px; justify-content:space-between; display:flex; flex-wrap:wrap; gap:10px">
   <span class="pillbar">
-    <a class="tab {% if direction == 'deps' %}active{% endif %}" href="?view=deps" title="Caller on top, what it depends on nested below">Call tree</a>
-    <a class="tab {% if direction == 'usage' %}active{% endif %}" href="?view=usage" title="Shared script on top, everything that uses it nested below">Impact tree (Used by)</a>
+    <a class="tab {% if layout != 'graph' %}active{% endif %}" href="?view={{ direction }}&amp;layout=tree">Tree</a>
+    <a class="tab {% if layout == 'graph' %}active{% endif %}" href="?view={{ direction }}&amp;layout=graph">Graph</a>
   </span>
+  {% if layout != 'graph' %}
+    <span class="pillbar">
+      <a class="tab {% if direction == 'deps' %}active{% endif %}" href="?view=deps&amp;layout={{ layout }}" title="Caller on top, what it depends on nested below">Call tree</a>
+      <a class="tab {% if direction == 'usage' %}active{% endif %}" href="?view=usage&amp;layout={{ layout }}" title="Shared script on top, everything that uses it nested below">Impact tree (Used by)</a>
+    </span>
+  {% endif %}
 </div>
 
-{% if direction == 'usage' %}
+{% if layout == 'graph' %}
   <p class="hint">
-    <strong>Impact view:</strong> shared scripts (e.g. Script Includes) are at the top;
-    nested under each one is everything that <strong>uses</strong> it — answering
-    "what breaks if I change this?".
+    Each node is one script, shown once no matter how many others call it. An arrow from
+    A to B means <strong>A depends on / calls B</strong>. Drag nodes to rearrange, scroll to zoom,
+    click a node to open that item.
   </p>
+  <div class="panel deps-panel">
+    {% if graph_data.nodes %}
+      <div id="dep-graph" class="dep-graph"></div>
+      {{ graph_data|json_script:"dep-graph-data" }}
+    {% else %}
+      <div class="empty" style="border:none;background:none">
+        <p>No dependencies detected between scripts in this project yet.</p>
+        <p class="hint" style="margin:6px auto 0">Add scripts that call each other — e.g. a Business Rule that uses a
+        Script Include — then hit Rescan. Make sure the called script's identifier is set
+        (check it on the item's edit page).</p>
+      </div>
+    {% endif %}
+  </div>
 {% else %}
-  <p class="hint">
-    Detection: each script has an <strong>identifier</strong> (e.g. a Script Include class name,
-    auto-detected from <code>Class.create()</code>). If script A's code mentions script B's
-    identifier, A is shown as depending on B. Entry points (nothing calls them) are at the top.
-  </p>
-{% endif %}
-
-<div class="panel deps-panel">
-  {% if roots %}
-    <ul class="tree tree-root">
-      {% for node in roots %}
-        {% include "vault/_tree_node.html" with node=node root=True %}
-      {% endfor %}
-    </ul>
+  {% if direction == 'usage' %}
+    <p class="hint">
+      <strong>Impact view:</strong> shared scripts (e.g. Script Includes) are at the top;
+      nested under each one is everything that <strong>uses</strong> it — answering
+      "what breaks if I change this?".
+    </p>
   {% else %}
-    <div class="empty" style="border:none;background:none">
-      <p>No dependencies detected between scripts in this project yet.</p>
-      <p class="hint" style="margin:6px auto 0">Add scripts that call each other — e.g. a Business Rule that uses a
-      Script Include — then hit Rescan. Make sure the called script's identifier is set
-      (check it on the item's edit page).</p>
-    </div>
+    <p class="hint">
+      Detection: each script has an <strong>identifier</strong> (e.g. a Script Include class name,
+      auto-detected from <code>Class.create()</code>). If script A's code mentions script B's
+      identifier, A is shown as depending on B. Entry points (nothing calls them) are at the top.
+    </p>
   {% endif %}
 
-  {% if standalone %}
-    <hr class="rule">
-    <h2 class="sa-title"><span class="h-ico">&#8856;</span> Standalone Scripts (No Dependencies)</h2>
-    <div class="sa-grid">
-      {% for item in standalone %}
-        <a class="sa-card" href="{{ item.get_absolute_url }}">
-          <span class="sa-name">{{ item.title }}</span>
-          <span class="badge {{ item.script_type }}">{% if item.kind == 'xml' %}XML{% else %}{{ item.get_script_type_display }}{% endif %}</span>
-        </a>
-      {% endfor %}
-    </div>
+  <div class="panel deps-panel">
+    {% if roots %}
+      <ul class="tree tree-root">
+        {% for node in roots %}
+          {% include "vault/_tree_node.html" with node=node root=True %}
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty" style="border:none;background:none">
+        <p>No dependencies detected between scripts in this project yet.</p>
+        <p class="hint" style="margin:6px auto 0">Add scripts that call each other — e.g. a Business Rule that uses a
+        Script Include — then hit Rescan. Make sure the called script's identifier is set
+        (check it on the item's edit page).</p>
+      </div>
+    {% endif %}
+
+    {% if standalone %}
+      <hr class="rule">
+      <h2 class="sa-title"><span class="h-ico">&#8856;</span> Standalone Scripts (No Dependencies)</h2>
+      <div class="sa-grid">
+        {% for item in standalone %}
+          <a class="sa-card" href="{{ item.get_absolute_url }}">
+            <span class="sa-name">{{ item.title }}</span>
+            <span class="badge {{ item.script_type }}">{% if item.kind == 'xml' %}XML{% else %}{{ item.get_script_type_display }}{% endif %}</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {% if layout == 'graph' and graph_data.nodes %}
+    {% load static %}
+    <script src="{% static 'js/dep-graph.js' %}"></script>
   {% endif %}
-</div>
 {% endblock %}

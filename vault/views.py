@@ -10,11 +10,17 @@ from django.db.models import Count, Q
 from django.http import FileResponse, Http404, HttpResponse, HttpResponseNotModified
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import http_date
+from django.views.decorators.http import require_POST
 from django.views.static import was_modified_since
 
 from .forms import ItemForm, ProjectForm
 from .models import ApiToken, Item, Project
-from .services import build_dependency_tree, fill_identifier, rebuild_project_dependencies
+from .services import (
+    build_dependency_graph,
+    build_dependency_tree,
+    fill_identifier,
+    rebuild_project_dependencies,
+)
 
 
 # ---------------------------------------------------------------- projects
@@ -144,6 +150,7 @@ def project_dependencies(request, slug):
         )
         return redirect("project_dependencies", slug=project.slug)
     direction = "usage" if request.GET.get("view") == "usage" else "deps"
+    layout = "graph" if request.GET.get("layout") == "graph" else "tree"
     roots, standalone = build_dependency_tree(project, direction=direction)
     return render(
         request,
@@ -153,6 +160,8 @@ def project_dependencies(request, slug):
             "roots": roots,
             "standalone": standalone,
             "direction": direction,
+            "layout": layout,
+            "graph_data": build_dependency_graph(project),
         },
     )
 
@@ -264,6 +273,22 @@ def item_delete(request, uid):
         messages.success(request, "Deleted: " + title)
         return redirect(project.get_absolute_url())
     return render(request, "vault/item_confirm_delete.html", {"item": item})
+
+
+@login_required
+@require_POST
+def item_bulk_delete(request, slug):
+    project = get_object_or_404(Project, slug=slug, owner=request.user)
+    uids = request.POST.getlist("uid")
+    items = list(Item.objects.filter(project=project, owner=request.user, uid__in=uids))
+    for item in items:
+        item.delete()
+    if items:
+        rebuild_project_dependencies(project)
+        messages.success(request, "Deleted " + str(len(items)) + " item(s).")
+    else:
+        messages.error(request, "No items were selected.")
+    return redirect(project.get_absolute_url())
 
 
 @login_required

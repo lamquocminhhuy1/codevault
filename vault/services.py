@@ -165,3 +165,53 @@ def build_dependency_tree(project, direction="deps"):
         if item.pk not in in_any_edge
     ]
     return roots, standalone
+
+
+def build_dependency_graph(project):
+    """Flat node/edge data for a visual dependency graph.
+
+    Unlike build_dependency_tree(), a shared script (e.g. a Script Include
+    called from five places) appears as exactly one node here instead of
+    being duplicated under every caller - a real graph, not a tree. Only
+    items that participate in at least one edge are included; items with no
+    detected dependencies at all are already surfaced separately as
+    "standalone" wherever the tree view is shown, so the graph stays focused
+    on the part that's actually interesting to look at.
+
+    Returns {"nodes": [...], "edges": [...]} ready to hand to a JS graph
+    library: node ids are the item pk (stable, unique, and already what
+    Dependency's foreign keys use), edges are {"from": pk, "to": pk} meaning
+    "from depends on / calls to".
+    """
+    items = list(project.items.exclude(kind=Item.Kind.IMAGE))
+    by_pk = dict((i.pk, i) for i in items)
+    edges = Dependency.objects.filter(from_item__project=project).values_list(
+        "from_item_id", "to_item_id"
+    )
+
+    connected = set()
+    graph_edges = []
+    seen = set()
+    for from_id, to_id in edges:
+        if from_id not in by_pk or to_id not in by_pk or from_id == to_id:
+            continue
+        key = (from_id, to_id)
+        if key in seen:
+            continue
+        seen.add(key)
+        connected.add(from_id)
+        connected.add(to_id)
+        graph_edges.append({"from": from_id, "to": to_id})
+
+    nodes = [
+        {
+            "id": item.pk,
+            "title": item.title,
+            "type": item.script_type,
+            "kind": item.kind,
+            "url": item.get_absolute_url(),
+        }
+        for item in items
+        if item.pk in connected
+    ]
+    return {"nodes": nodes, "edges": graph_edges}

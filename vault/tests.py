@@ -13,7 +13,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .models import ApiToken, Dependency, Item, Project
-from .services import build_dependency_tree, rebuild_project_dependencies
+from .services import build_dependency_graph, build_dependency_tree, rebuild_project_dependencies
 
 # 1x1 transparent PNG
 TINY_PNG = (
@@ -425,6 +425,43 @@ class ItemTests(BaseTestCase):
             response = self.client.get(url, HTTP_IF_MODIFIED_SINCE=response["Last-Modified"])
             self.assertEqual(response.status_code, 304)
 
+    def test_bulk_delete_removes_selected_items_only(self):
+        self.login()
+        a = Item.objects.create(owner=self.user, project=self.project, kind="code", title="A", content="1")
+        b = Item.objects.create(owner=self.user, project=self.project, kind="code", title="B", content="2")
+        keep = Item.objects.create(owner=self.user, project=self.project, kind="code", title="Keep", content="3")
+
+        response = self.client.post(
+            reverse("item_bulk_delete", args=[self.project.slug]),
+            {"uid": [str(a.uid), str(b.uid)]},
+        )
+        self.assertRedirects(response, self.project.get_absolute_url())
+        self.assertFalse(Item.objects.filter(pk__in=[a.pk, b.pk]).exists())
+        self.assertTrue(Item.objects.filter(pk=keep.pk).exists())
+
+    def test_bulk_delete_ignores_other_users_items(self):
+        self.login()
+        mine = Item.objects.create(owner=self.user, project=self.project, kind="code", title="Mine", content="1")
+        their_project = Project.objects.create(owner=self.other, name="Theirs")
+        theirs = Item.objects.create(owner=self.other, project=their_project, kind="code", title="Theirs", content="2")
+
+        self.client.post(
+            reverse("item_bulk_delete", args=[self.project.slug]),
+            {"uid": [str(mine.uid), str(theirs.uid)]},
+        )
+        self.assertFalse(Item.objects.filter(pk=mine.pk).exists())
+        self.assertTrue(Item.objects.filter(pk=theirs.pk).exists())
+
+    def test_bulk_delete_requires_post(self):
+        self.login()
+        response = self.client.get(reverse("item_bulk_delete", args=[self.project.slug]))
+        self.assertEqual(response.status_code, 405)
+
+    def test_bulk_delete_requires_login(self):
+        response = self.client.post(reverse("item_bulk_delete", args=[self.project.slug]), {"uid": []})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("login"), response.url)
+
 
 class DependencyTests(BaseTestCase):
     def make_script(self, title, content, identifier="", script_type="other"):
@@ -520,6 +557,49 @@ class DependencyTests(BaseTestCase):
         self.assertEqual(Dependency.objects.count(), 1)
         self.client.post(reverse("item_delete", args=[si.uid]))
         self.assertEqual(Dependency.objects.count(), 0)
+
+    # ------------------------------------------------------------- graph
+
+    def test_graph_shows_each_shared_node_once(self):
+        # A Script Include called from three places must appear as exactly
+        # one node - the whole point of the graph over the tree view, which
+        # would duplicate it under each caller instead.
+        si = self.make_script(
+            "SI", "var CalcUtils = Class.create();", identifier="CalcUtils",
+            script_type="script_include",
+        )
+        for i in range(3):
+            self.make_script("Caller{0}".format(i), "new CalcUtils().run();")
+        rebuild_project_dependencies(self.project)
+
+        graph = build_dependency_graph(self.project)
+        si_nodes = [n for n in graph["nodes"] if n["id"] == si.pk]
+        self.assertEqual(len(si_nodes), 1)
+        self.assertEqual(len(graph["nodes"]), 4)
+        self.assertEqual(len(graph["edges"]), 3)
+        for edge in graph["edges"]:
+            self.assertEqual(edge["to"], si.pk)
+
+    def test_graph_excludes_standalone_items(self):
+        self.make_script("Lonely", "gs.info('hi');")
+        graph = build_dependency_graph(self.project)
+        self.assertEqual(graph["nodes"], [])
+        self.assertEqual(graph["edges"], [])
+
+    def test_graph_view_renders_with_layout_param(self):
+        self.login()
+        si = self.make_script(
+            "SI", "var CalcUtils = Class.create();", identifier="CalcUtils",
+        )
+        self.make_script("BR", "new CalcUtils().run();")
+        rebuild_project_dependencies(self.project)
+
+        response = self.client.get(
+            reverse("project_dependencies", args=[self.project.slug]), {"layout": "graph"}
+        )
+        self.assertContains(response, 'id="dep-graph"')
+        self.assertContains(response, "dep-graph-data")
+        self.assertContains(response, "vendor/cytoscape/cytoscape.min.js")
 
 
 class ApiTests(BaseTestCase):

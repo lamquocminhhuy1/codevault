@@ -55,51 +55,63 @@
 </div>
 
 {% if page.object_list %}
-  <div class="card-box">
-    <div class="table-head">
-      <span style="flex:1">Name</span>
-      <span style="width:160px">Type</span>
-      <span style="width:130px;text-align:right">
-        <a class="sort-link {% if sort %}active{% endif %}"
-           href="?kind={{ kind }}&amp;stype={{ stype }}&amp;q={{ query|urlencode }}&amp;sort={% if sort == 'modified_desc' %}modified_asc{% else %}modified_desc{% endif %}"
-           title="Sort by last modified">
-          Last Modified
-          {% if sort == 'modified_asc' %}<span class="sort-arrow">&#9650;</span>
-          {% elif sort == 'modified_desc' %}<span class="sort-arrow">&#9660;</span>
-          {% endif %}
-        </a>
-      </span>
+  <form method="post" action="{% url 'item_bulk_delete' project.slug %}" id="bulk-form">
+    {% csrf_token %}
+    <div class="bulk-actions" id="bulk-actions" hidden>
+      <span id="bulk-count">0 selected</span>
+      <button type="submit" class="btn danger small">Delete selected</button>
+      <button type="button" class="btn secondary small" id="bulk-clear-btn">Clear</button>
     </div>
-    <div class="file-list">
-      {% for item in page.object_list %}
-        <a class="file-row" href="{{ item.get_absolute_url }}">
-          {% if item.is_image and item.upload %}
-            <img class="file-thumb" src="{% url 'serve_media' item.upload.name %}" alt="">
-          {% elif item.kind == 'xml' %}
-            <span class="file-ico xml">&lt;/&gt;</span>
-          {% else %}
-            <span class="file-ico code">{ }</span>
-          {% endif %}
-          <span class="file-main">
-            <span class="file-name">{{ item.title }}</span>
-            {% if item.identifier %}<code>{{ item.identifier }}</code>{% endif %}
-          </span>
-          <span class="file-type">
-            {% if item.kind == 'image' %}
-              <span class="badge">SCREENSHOT</span>
-            {% elif item.script_type != 'other' %}
-              <span class="badge {{ item.script_type }}">{{ item.get_script_type_display }}</span>
-            {% elif item.kind == 'xml' %}
-              <span class="badge">XML</span>
-            {% else %}
-              <span class="badge">CODE</span>
+    <div class="card-box">
+      <div class="table-head">
+        <span class="row-check"><input type="checkbox" id="select-all-items" title="Select all"></span>
+        <span style="flex:1">Name</span>
+        <span style="width:160px">Type</span>
+        <span style="width:130px;text-align:right">
+          <a class="sort-link {% if sort %}active{% endif %}"
+             href="?kind={{ kind }}&amp;stype={{ stype }}&amp;q={{ query|urlencode }}&amp;sort={% if sort == 'modified_desc' %}modified_asc{% else %}modified_desc{% endif %}"
+             title="Sort by last modified">
+            Last Modified
+            {% if sort == 'modified_asc' %}<span class="sort-arrow">&#9650;</span>
+            {% elif sort == 'modified_desc' %}<span class="sort-arrow">&#9660;</span>
             {% endif %}
-          </span>
-          <span class="file-date">{{ item.updated_at|ago }}</span>
-        </a>
-      {% endfor %}
+          </a>
+        </span>
+      </div>
+      <div class="file-list">
+        {% for item in page.object_list %}
+          <div class="file-row">
+            <span class="row-check"><input type="checkbox" name="uid" value="{{ item.uid }}" class="item-check"></span>
+            <a class="file-row-link" href="{{ item.get_absolute_url }}">
+              {% if item.is_image and item.upload %}
+                <img class="file-thumb" src="{% url 'serve_media' item.upload.name %}" alt="">
+              {% elif item.kind == 'xml' %}
+                <span class="file-ico xml">&lt;/&gt;</span>
+              {% else %}
+                <span class="file-ico code">{ }</span>
+              {% endif %}
+              <span class="file-main">
+                <span class="file-name">{{ item.title }}</span>
+                {% if item.identifier %}<code>{{ item.identifier }}</code>{% endif %}
+              </span>
+              <span class="file-type">
+                {% if item.kind == 'image' %}
+                  <span class="badge">SCREENSHOT</span>
+                {% elif item.script_type != 'other' %}
+                  <span class="badge {{ item.script_type }}">{{ item.get_script_type_display }}</span>
+                {% elif item.kind == 'xml' %}
+                  <span class="badge">XML</span>
+                {% else %}
+                  <span class="badge">CODE</span>
+                {% endif %}
+              </span>
+              <span class="file-date">{{ item.updated_at|ago }}</span>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
     </div>
-  </div>
+  </form>
 
   {% if page.has_other_pages %}
     <div class="pagination">

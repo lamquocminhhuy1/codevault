@@ -689,6 +689,65 @@
     });
   }
 
+  /* ---- Item list: select + bulk delete --------------------------------- */
+
+  function initBulkSelect() {
+    var form = document.getElementById("bulk-form");
+    if (!form) { return; }
+    var selectAll = document.getElementById("select-all-items");
+    var checks = form.querySelectorAll(".item-check");
+    var bar = document.getElementById("bulk-actions");
+    var countEl = document.getElementById("bulk-count");
+    var clearBtn = document.getElementById("bulk-clear-btn");
+    var i;
+
+    function update() {
+      var checked = form.querySelectorAll(".item-check:checked");
+      var n = checked.length;
+      bar.hidden = n === 0;
+      if (countEl) {
+        countEl.textContent = n + (n === 1 ? " item selected" : " items selected");
+      }
+      if (selectAll) {
+        selectAll.checked = n > 0 && n === checks.length;
+      }
+    }
+
+    for (i = 0; i < checks.length; i++) {
+      checks[i].addEventListener("change", update);
+    }
+    if (selectAll) {
+      selectAll.addEventListener("change", function () {
+        var j;
+        for (j = 0; j < checks.length; j++) {
+          checks[j].checked = selectAll.checked;
+        }
+        update();
+      });
+    }
+    if (clearBtn) {
+      clearBtn.addEventListener("click", function () {
+        var j;
+        for (j = 0; j < checks.length; j++) {
+          checks[j].checked = false;
+        }
+        update();
+      });
+    }
+    form.addEventListener("submit", function (e) {
+      var checked = form.querySelectorAll(".item-check:checked");
+      if (checked.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      var msg = "Delete " + checked.length + " item" + (checked.length === 1 ? "" : "s") + "? This cannot be undone.";
+      if (!window.confirm(msg)) {
+        e.preventDefault();
+      }
+    });
+    update();
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     initCopyButtons();
     initEditors();
@@ -700,5 +759,6 @@
     initThemeToggle();
     initDepsTree();
     initDepsFilter();
+    initBulkSelect();
   });
 })();

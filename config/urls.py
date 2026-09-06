@@ -82,6 +82,7 @@ urlpatterns = [
     path("p/<slug:slug>/delete/", views.project_delete, name="project_delete"),
     path("p/<slug:slug>/deps/", views.project_dependencies, name="project_dependencies"),
     path("p/<slug:slug>/new/", views.item_create, name="item_create"),
+    path("p/<slug:slug>/items/bulk-delete/", views.item_bulk_delete, name="item_bulk_delete"),
     path("item/<uuid:uid>/", views.item_detail, name="item_detail"),
     path("item/<uuid:uid>/edit/", views.item_edit, name="item_edit"),
     path("item/<uuid:uid>/delete/", views.item_delete, name="item_delete"),
