@@ -313,25 +313,6 @@
     });
   }
 
-  /* ---- Sidebar collapse ------------------------------------------------ */
-
-  function initSidebarToggle() {
-    var btn = document.getElementById("sidebar-toggle");
-    if (!btn) { return; }
-    btn.addEventListener("click", function () {
-      var collapsed = document.documentElement.getAttribute("data-sidebar") === "collapsed";
-      var next = collapsed ? "" : "collapsed";
-      if (next) {
-        document.documentElement.setAttribute("data-sidebar", next);
-      } else {
-        document.documentElement.removeAttribute("data-sidebar");
-      }
-      try { localStorage.setItem("cv-sidebar-collapsed", next ? "1" : "0"); } catch (err) { /* ignore */ }
-      btn.setAttribute("aria-expanded", next ? "false" : "true");
-      refreshEditors();
-    });
-  }
-
   /* ---- Clipboard-paste / drag-drop screenshot upload ------------------ */
 
   function setFileInput(input, file) {
@@ -717,7 +698,6 @@
     initIdentifierToggle();
     initProjectScopeToggle();
     initThemeToggle();
-    initSidebarToggle();
     initDepsTree();
     initDepsFilter();
   });

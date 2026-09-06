@@ -130,72 +130,30 @@ code { font-family: var(--mono); }
 
 .app { display: flex; min-height: 100vh; }
 
-/* Icon rail: a slim, permanently-dark strip (VSCode/Linear-style "activity
-   bar") that stays put whichever way the light/dark toggle is set, so it
-   reads as one fixed piece of chrome rather than repainting with the page.
-   It's the only nav left once the labeled sidebar is collapsed. */
-.icon-rail {
-  width: 56px; flex-shrink: 0;
-  position: sticky; top: 0; height: 100vh;
-  display: flex; flex-direction: column; align-items: center;
-  padding: 16px 0; gap: 22px;
-  background: #1b1c22;
-}
-.rail-logo {
-  width: 32px; height: 32px; border-radius: var(--r-lg); flex-shrink: 0;
-  background: var(--primary); color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 12.5px; letter-spacing: 0.02em;
-}
-.rail-logo:hover { text-decoration: none; background: var(--primary-hover); }
-.rail-nav { display: flex; flex-direction: column; gap: 6px; }
-.rail-link {
-  width: 34px; height: 34px; border-radius: var(--r-lg);
-  display: flex; align-items: center; justify-content: center;
-  color: #9a9aad;
-}
-.rail-link svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; }
-.rail-link:hover { background: rgba(255, 255, 255, 0.06); color: #fff; text-decoration: none; }
-.rail-link.active { background: #33343f; color: #fff; }
-.rail-avatar {
-  margin-top: auto; width: 30px; height: 30px; border-radius: 50%;
-  background: var(--primary-tint); color: var(--primary-light);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11.5px; font-weight: 700;
-}
-
 .sidebar {
-  width: 240px; flex-shrink: 0;
+  width: 260px; flex-shrink: 0;
   position: sticky; top: 0; height: 100vh;
   display: flex; flex-direction: column;
-  padding: 18px 16px 20px;
+  padding: 20px 16px 20px;
   background: var(--surface);
   border-right: 1px solid var(--border);
-  overflow: hidden;
-  transition: width 0.15s, padding 0.15s, opacity 0.1s;
 }
-.sidebar-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 0 4px 18px; }
-.brand { min-width: 0; }
+.brand { display: flex; align-items: center; gap: 12px; padding: 0 4px 20px; }
 .brand:hover { text-decoration: none; }
-.brand .brand-eyebrow {
-  display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
-  text-transform: uppercase; color: var(--faint); white-space: nowrap;
+.brand .logo {
+  width: 34px; height: 34px; border-radius: var(--r-lg); flex-shrink: 0;
+  background: var(--primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13px; letter-spacing: 0.02em;
 }
-.brand .brand-name { display: block; color: var(--text); font-weight: 700; font-size: 17px; letter-spacing: -0.02em; line-height: 1.3; white-space: nowrap; }
-
-.rail-toggle {
-  flex-shrink: 0; width: 26px; height: 26px; border-radius: var(--r-badge);
-  border: 1px solid var(--border); background: var(--surface-2); color: var(--muted);
-  display: flex; align-items: center; justify-content: center; cursor: pointer;
-}
-.rail-toggle:hover { color: var(--text); background: var(--surface-3); }
-.rail-toggle svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+.brand .brand-name { color: var(--text); font-weight: 700; font-size: 17px; letter-spacing: -0.02em; line-height: 1.2; }
+.brand .brand-sub { color: var(--faint); font-size: 12px; font-weight: 400; }
 
 .side-cta {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   background: var(--primary); color: #fff; border: none; cursor: pointer;
   border-radius: var(--r); padding: 10px 14px; margin-bottom: 20px;
-  font-family: inherit; font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden;
+  font-family: inherit; font-size: 13.5px; font-weight: 600;
   transition: background 0.15s;
 }
 .side-cta:hover { background: var(--primary-hover); color: #fff; text-decoration: none; }
@@ -205,7 +163,7 @@ code { font-family: var(--mono); }
   position: relative;
   display: flex; align-items: center; gap: 12px; width: 100%;
   padding: 9px 12px; border-radius: var(--r);
-  color: var(--muted); font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden;
+  color: var(--muted); font-size: 13.5px; font-weight: 500;
   background: none; border: none; cursor: pointer; font-family: inherit; text-align: left;
   transition: background 0.12s, color 0.12s;
 }
@@ -218,28 +176,18 @@ html[data-theme="light"] .side-link.active { color: var(--primary); }
 .side-footer { margin-top: auto; display: flex; flex-direction: column; gap: 2px; }
 .side-footer form { margin: 0; }
 
-/* Collapsed: the labeled panel shrinks away and the dark icon rail becomes
-   the only nav - a manual, sticky-across-visits alternative to the
-   below-860px responsive collapse (which stays automatic and unaffected). */
-html[data-sidebar="collapsed"] .sidebar {
-  width: 0; padding-left: 0; padding-right: 0; border-right: none; opacity: 0;
-}
-
 .main { flex: 1; min-width: 0; }
 .container { max-width: 1180px; margin: 0 auto; padding: 32px 36px 80px; }
 
 @media (max-width: 860px) {
   .app { flex-direction: column; }
-  .icon-rail { display: none; }
-  html[data-sidebar="collapsed"] .sidebar { width: 100%; padding: 10px 14px; opacity: 1; }
   .sidebar {
     width: 100%; height: auto; position: static;
     flex-direction: row; align-items: center; flex-wrap: wrap; gap: 4px;
     border-right: none; border-bottom: 1px solid var(--border);
     padding: 10px 14px;
   }
-  .sidebar-head { padding: 0 8px 0 0; }
-  .rail-toggle { display: none; }
+  .brand { padding: 0 8px 0 0; }
   .side-cta { margin: 0 8px 0 0; padding: 7px 12px; }
   .side-nav { flex-direction: row; }
   .side-footer { margin-top: 0; margin-left: auto; flex-direction: row; }
