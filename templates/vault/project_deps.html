@@ -2,6 +2,8 @@
 
 {% block title %}Dependencies · {{ project.name }} · CodeVault{% endblock %}
 
+{% block container_class %}{% if layout == 'graph' %}wide{% endif %}{% endblock %}
+
 {% block extra_head %}
   {% if layout == 'graph' %}
     {% load static %}

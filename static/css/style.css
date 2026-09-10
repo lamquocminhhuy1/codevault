@@ -178,6 +178,7 @@ html[data-theme="light"] .side-link.active { color: var(--primary); }
 
 .main { flex: 1; min-width: 0; }
 .container { max-width: 1180px; margin: 0 auto; padding: 32px 36px 80px; }
+.container.wide { max-width: none; }
 
 @media (max-width: 860px) {
   .app { flex-direction: column; }
@@ -496,7 +497,7 @@ html[data-theme="light"] .pillbar .tab.active { color: var(--primary); }
 .graph-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .dep-graph-wrap { position: relative; }
 .dep-graph {
-  width: 100%; height: 70vh; min-height: 420px;
+  width: 100%; height: calc(100vh - 220px); min-height: 480px;
   background-color: #1a1b21;
   background-image: radial-gradient(circle, #2c2d37 1.4px, transparent 1.4px);
   background-size: 24px 24px;

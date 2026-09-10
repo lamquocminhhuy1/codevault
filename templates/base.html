@@ -73,7 +73,7 @@
       </div>
     </aside>
     <div class="main">
-      <main class="container">
+      <main class="container {% block container_class %}{% endblock %}">
         {% if messages %}
           <ul class="messages">
             {% for message in messages %}
