@@ -208,6 +208,7 @@ def build_dependency_graph(project):
             "id": item.pk,
             "title": item.title,
             "type": item.script_type,
+            "type_label": "XML" if item.kind == Item.Kind.XML and item.script_type == Item.ScriptType.OTHER else item.get_script_type_display(),
             "kind": item.kind,
             "url": item.get_absolute_url(),
         }

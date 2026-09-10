@@ -54,12 +54,25 @@
 {% if layout == 'graph' %}
   <p class="hint">
     Each node is one script, shown once no matter how many others call it. An arrow from
-    A to B means <strong>A depends on / calls B</strong>. Drag nodes to rearrange, scroll to zoom,
-    click a node to open that item.
+    A to B means <strong>A depends on / calls B</strong>. Hover a node to trace what it touches,
+    drag to rearrange, scroll to zoom, click to open that item.
   </p>
   <div class="panel deps-panel">
     {% if graph_data.nodes %}
-      <div id="dep-graph" class="dep-graph"></div>
+      <div class="graph-toolbar">
+        <span class="searchbox" style="max-width:280px">
+          <input type="text" id="graph-search" placeholder="Search nodes..." autocomplete="off">
+        </span>
+      </div>
+      <div class="dep-graph-wrap">
+        <div id="dep-graph" class="dep-graph"></div>
+        <div class="graph-controls">
+          <button type="button" id="graph-zoom-in" class="graph-ctrl-btn" title="Zoom in">+</button>
+          <button type="button" id="graph-zoom-out" class="graph-ctrl-btn" title="Zoom out">&minus;</button>
+          <button type="button" id="graph-fit" class="graph-ctrl-btn" title="Fit to screen">&#10021;</button>
+        </div>
+        <div id="graph-legend" class="graph-legend"></div>
+      </div>
       {{ graph_data|json_script:"dep-graph-data" }}
     {% else %}
       <div class="empty" style="border:none;background:none">
