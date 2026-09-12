@@ -68,6 +68,7 @@ class CodeVaultTools(MCPToolset):
         client_callable: bool | None = None,
         api_endpoint: str | None = None,
         sub_type: str | None = None,
+        extra_fields: dict | None = None,
     ) -> dict:
         """Create or update a script/file in a CodeVault project (push code).
         Matches an existing item to update by uid, then by identifier, then
@@ -76,6 +77,19 @@ class CodeVaultTools(MCPToolset):
         screenshots aren't supported here. script_type is one of
         script_include, business_rule, client_script, ui_page, ui_action,
         ui_macro, scheduled_job, fix_script, rest_api, widget, other.
+
+        extra_fields holds the type-specific ServiceNow properties that
+        don't have their own parameter above, keyed by script_type - e.g.
+        for business_rule: {"active": true, "advanced": false,
+        "abort_action": false, "priority": 100}; for client_script:
+        {"ui_type": "1", "isolate_script": true}; for ui_action:
+        {"action_name": "...", "order": 100, "client": true,
+        "onclick": "...", "form_button": true}; for scheduled_job:
+        {"run_type": "daily", "run_time": "02:00:00", "active": true}.
+        See CodeVault's vault/sn_schema.py for the full field list per
+        type. Passing extra_fields replaces the item's whole extra_fields
+        dict, so include every key you want kept, not just the ones
+        changing.
 
         Only pass the fields you actually want to set - any field left as
         null keeps the existing item's value untouched (e.g. updating just
@@ -98,6 +112,7 @@ class CodeVaultTools(MCPToolset):
             "client_callable": client_callable,
             "api_endpoint": api_endpoint,
             "sub_type": sub_type,
+            "extra_fields": extra_fields,
         }
         payload = {k: v for k, v in payload.items() if v is not None}
         payload["kind"] = kind

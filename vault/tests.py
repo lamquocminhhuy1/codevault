@@ -140,6 +140,58 @@ class ItemTests(BaseTestCase):
         item = Item.objects.get(title="BR test")
         self.assertEqual(item.project, self.project)
 
+    def test_extra_fields_saved_for_selected_script_type(self):
+        self.login()
+        self.client.post(
+            reverse("item_create", args=[self.project.slug]),
+            {
+                "kind": "code",
+                "script_type": "business_rule",
+                "title": "BR with extras",
+                "identifier": "",
+                "language": "javascript",
+                "content": "var x = 1;",
+                "note": "",
+                "extra__business_rule__active": "on",
+                "extra__business_rule__abort_action": "on",
+                "extra__business_rule__priority": "100",
+                # Should be ignored: not the selected script_type.
+                "extra__client_script__isolate_script": "on",
+            },
+        )
+        item = Item.objects.get(title="BR with extras")
+        self.assertEqual(
+            item.extra_fields,
+            {
+                "active": True,
+                "advanced": False,
+                "add_message": False,
+                "abort_action": True,
+                "priority": 100,
+            },
+        )
+
+    def test_edit_item_replaces_extra_fields_on_type_change(self):
+        self.login()
+        item = Item.objects.create(
+            owner=self.user, project=self.project, kind="code",
+            title="Switches type", content="var x;", script_type="business_rule",
+            extra_fields={"active": True, "abort_action": True},
+        )
+        self.client.post(
+            reverse("item_edit", args=[item.uid]),
+            {
+                "kind": "code", "script_type": "client_script",
+                "title": "Switches type", "identifier": "",
+                "language": "javascript", "content": "var x;",
+                "extra__client_script__isolate_script": "on",
+            },
+        )
+        item.refresh_from_db()
+        self.assertEqual(
+            item.extra_fields, {"isolate_script": True, "applies_extended": False}
+        )
+
     def test_code_item_requires_content(self):
         self.login()
         response = self.client.post(
@@ -678,6 +730,32 @@ class ApiTests(BaseTestCase):
         item = Item.objects.get(project=self.project, title="CalcUtils")
         self.assertEqual(item.content, "var CalcUtils = Class.create();")
         self.assertTrue(item.identifier_is_manual)
+
+    def test_push_and_fetch_extra_fields(self):
+        response = self.post_json(
+            reverse("api_items", args=[self.project.slug]),
+            {
+                "kind": "code",
+                "script_type": "business_rule",
+                "title": "BR via API",
+                "content": "var x;",
+                "extra_fields": {"active": True, "priority": 200},
+            },
+        )
+        body = response.json()
+        self.assertEqual(body["item"]["extra_fields"], {"active": True, "priority": 200})
+
+        get_response = self.client.get(
+            reverse("api_item_detail", args=[body["item"]["uid"]]), **self.auth
+        )
+        self.assertEqual(get_response.json()["item"]["extra_fields"], {"active": True, "priority": 200})
+
+    def test_push_extra_fields_must_be_object(self):
+        response = self.post_json(
+            reverse("api_items", args=[self.project.slug]),
+            {"kind": "code", "title": "Bad extras", "content": "var x;", "extra_fields": "nope"},
+        )
+        self.assertEqual(response.status_code, 400)
 
     def test_pushing_same_identifier_updates_instead_of_duplicating(self):
         self.post_json(

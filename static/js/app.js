@@ -483,6 +483,14 @@
       var visible = isCode && (schema.fields || []).indexOf(snFields[i].id) !== -1;
       snFields[i].style.display = visible ? "" : "none";
     }
+
+    // Type-specific metadata fields (SCRIPT_TYPE_SCHEMAS on the backend) -
+    // one group per script type, only the matching one is shown.
+    var extraGroups = document.querySelectorAll(".sn-extra-group");
+    for (i = 0; i < extraGroups.length; i++) {
+      var extraOn = isCode && extraGroups[i].getAttribute("data-extra-type") === typeSelect.value;
+      extraGroups[i].style.display = extraOn ? "" : "none";
+    }
     var parts = document.querySelectorAll(".code-part");
     for (i = 0; i < parts.length; i++) {
       var partOn = isCode && (schema.parts || []).indexOf(parts[i].id) !== -1;

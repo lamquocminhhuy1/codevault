@@ -173,6 +173,25 @@
             {{ form.api_endpoint }}
           </div>
 
+          {% for script_type, group in form.extra_field_groups.items %}
+            <div class="sn-extra-group" data-extra-type="{{ script_type }}">
+              {% for entry in group %}
+                {% if entry.def.type == "boolean" %}
+                  <div class="check-row">
+                    {{ entry.field }}
+                    <label for="{{ entry.field.id_for_label }}">{{ entry.def.label }}</label>
+                  </div>
+                {% else %}
+                  <div class="field">
+                    <label for="{{ entry.field.id_for_label }}">{{ entry.def.label }}</label>
+                    {{ entry.field }}
+                    {% if entry.def.help %}<span class="helptext">{{ entry.def.help }}</span>{% endif %}
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% endfor %}
+
           <div id="identifier-area">
             {{ form.identifier.errors }}
             <div class="check-row">

@@ -196,6 +196,11 @@ class Item(models.Model):
         max_length=10000, blank=True,
         help_text="Scripted REST endpoint, e.g. GET /api/x_scope/v1/things.",
     )
+    extra_fields = models.JSONField(
+        default=dict, blank=True,
+        help_text="Type-specific metadata (e.g. Business Rule active/abort_action, "
+        "Scheduled Job run schedule) - see sn_schema.SCRIPT_TYPE_SCHEMAS.",
+    )
     # Extra code parts for multi-script components (UI Page, Widget).
     html_content = models.TextField(blank=True)
     client_content = models.TextField(blank=True)
@@ -266,6 +271,27 @@ class Item(models.Model):
     @property
     def screenshots(self):
         return self.attachments.filter(kind=self.Kind.IMAGE)
+
+    def extra_field_rows(self):
+        """(label, display_value) for this item's populated type-specific
+        fields, in schema order - drives the detail page's Properties card."""
+        from .sn_schema import SCRIPT_TYPE_SCHEMAS
+
+        rows = []
+        for field_def in SCRIPT_TYPE_SCHEMAS.get(self.script_type, []):
+            value = self.extra_fields.get(field_def["key"])
+            if field_def["type"] == "boolean":
+                if not value:
+                    continue
+                display = "Yes"
+            elif value in (None, ""):
+                continue
+            elif field_def["type"] == "select":
+                display = dict(field_def.get("choices", [])).get(value, value)
+            else:
+                display = value
+            rows.append((field_def["label"], display))
+        return rows
 
     def depends_on(self):
         return [d.to_item for d in self.dependencies_out.select_related("to_item")]

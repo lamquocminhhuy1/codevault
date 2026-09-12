@@ -116,6 +116,7 @@ def serialize_item_detail(item):
         "api_endpoint",
     ]:
         data[field] = getattr(item, field)
+    data["extra_fields"] = item.extra_fields
     return data
 
 
@@ -215,6 +216,10 @@ def op_push_item(user, slug, payload):
         item.br_order = payload["br_order"]
     if "client_callable" in payload:
         item.client_callable = bool(payload["client_callable"])
+    if "extra_fields" in payload:
+        if not isinstance(payload["extra_fields"], dict):
+            raise ApiError(400, "'extra_fields' must be a JSON object.")
+        item.extra_fields = payload["extra_fields"]
     if identifier:
         item.identifier = identifier
         item.identifier_is_manual = True

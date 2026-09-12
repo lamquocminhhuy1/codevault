@@ -3,6 +3,7 @@ import re
 from django import forms
 
 from .models import Item, Project
+from .sn_schema import SCRIPT_TYPE_SCHEMAS
 
 ALLOWED_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp")
 ALLOWED_XML_EXTENSIONS = (".xml", ".xsd", ".xsl", ".xslt", ".wsdl")
@@ -126,6 +127,59 @@ class ItemForm(forms.ModelForm):
         self.fields["related_to"].help_text = (
             "For screenshots: which script in this project it belongs to."
         )
+        self._init_extra_fields()
+
+    def _init_extra_fields(self):
+        """Add one form field per (script_type, key) in SCRIPT_TYPE_SCHEMAS.
+        All of them render in the DOM (like the existing sn-field metadata
+        inputs) and app.js shows only the group matching the selected
+        Script Type - see .sn-extra-group in item_form.html."""
+        stored = self.instance.extra_fields if self.instance and self.instance.pk else {}
+        self.extra_field_groups = {}
+        for script_type, field_defs in SCRIPT_TYPE_SCHEMAS.items():
+            group = []
+            for field_def in field_defs:
+                name = "extra__{0}__{1}".format(script_type, field_def["key"])
+                current = stored.get(field_def["key"]) if script_type == self.instance.script_type else None
+                if current is None:
+                    current = field_def.get("default", "")
+                field_type = field_def["type"]
+                if field_type == "boolean":
+                    field = forms.BooleanField(required=False, initial=bool(current))
+                elif field_type == "integer":
+                    field = forms.IntegerField(required=False, initial=current or None)
+                elif field_type == "select":
+                    field = forms.ChoiceField(
+                        required=False,
+                        choices=[("", "—")] + list(field_def["choices"]),
+                        initial=current,
+                    )
+                elif field_type == "textarea":
+                    field = forms.CharField(
+                        required=False, initial=current, widget=forms.Textarea(attrs={"rows": 2})
+                    )
+                else:
+                    field = forms.CharField(required=False, initial=current, max_length=1000)
+                field.label = field_def["label"]
+                field.help_text = field_def.get("help", "")
+                self.fields[name] = field
+                group.append({"field": self[name], "def": field_def})
+            self.extra_field_groups[script_type] = group
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        script_type = self.cleaned_data.get("script_type")
+        extra = {}
+        for entry in self.extra_field_groups.get(script_type, []):
+            field_def = entry["def"]
+            value = self.cleaned_data.get("extra__{0}__{1}".format(script_type, field_def["key"]))
+            if value in (None, ""):
+                continue
+            extra[field_def["key"]] = value
+        instance.extra_fields = extra
+        if commit:
+            instance.save()
+        return instance
 
     def clean(self):
         cleaned = super().clean()

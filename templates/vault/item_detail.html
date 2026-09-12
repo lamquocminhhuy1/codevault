@@ -83,7 +83,8 @@
   </div>
 
   <aside class="detail-side">
-    {% if item.sub_type or item.table_name or item.field_name or item.br_order or item.operations or item.condition or item.client_callable or item.api_endpoint %}
+    {% with extra_rows=item.extra_field_rows %}
+    {% if item.sub_type or item.table_name or item.field_name or item.br_order or item.operations or item.condition or item.client_callable or item.api_endpoint or extra_rows %}
       <div class="card-box">
         <div class="card-h"><span class="h-ico">&#9881;</span> Properties</div>
         <div class="side-sec">
@@ -96,10 +97,12 @@
             {% if item.client_callable %}<dt>Client callable</dt><dd><span class="status-dot"></span> Yes</dd>{% endif %}
             {% if item.api_endpoint %}<dt>Endpoint</dt><dd><code>{{ item.api_endpoint }}</code></dd>{% endif %}
             {% if item.condition %}<dt>Condition</dt><dd><code>{{ item.condition }}</code></dd>{% endif %}
+            {% for label, value in extra_rows %}<dt>{{ label }}</dt><dd><code>{{ value }}</code></dd>{% endfor %}
           </dl>
         </div>
       </div>
     {% endif %}
+    {% endwith %}
 
     {% if not item.is_image %}
       <div class="card-box">
