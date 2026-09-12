@@ -644,6 +644,22 @@ html[data-theme="light"] .segmented button.active { background: #fff; }
 .sn-topbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .sn-section { margin-bottom: 20px; }
 .sn-section:last-child { margin-bottom: 0; }
+
+/* Collapsible card via the native <details>/<summary> toggle - closed by
+   default, no JS needed for the expand/collapse itself. */
+.sn-collapsible > summary {
+  cursor: pointer; user-select: none; list-style: none;
+}
+.sn-collapsible > summary::-webkit-details-marker { display: none; }
+.sn-collapsible > summary::after {
+  content: "\276F";
+  margin-left: auto; font-size: 10px; color: var(--faint);
+  transition: transform 0.15s;
+}
+.sn-collapsible[open] > summary::after { transform: rotate(90deg); }
+.sn-collapse-hint { margin-left: 8px; font-size: 12px; font-weight: 400; color: var(--faint); }
+.sn-collapsible > summary { border-bottom: none; }
+.sn-collapsible[open] > summary { border-bottom: 1px solid var(--border); }
 .sn-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; }
 /* Descendant (not child) selector: .sn-extra-group is display:contents when
    active, which flattens its children into this grid without changing the

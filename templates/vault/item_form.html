@@ -90,8 +90,11 @@
     </div>
   </div>
 
-  <div class="card-box sn-section" id="properties-card">
-    <div class="card-h">Properties</div>
+  <details class="card-box sn-section sn-collapsible" id="properties-card">
+    <summary class="card-h">
+      Properties
+      <span class="sn-collapse-hint">Click to expand / collapse</span>
+    </summary>
     <div class="card-body sn-grid">
       {{ form.sub_type.errors }}
       <div class="field sn-field" id="subtype-field">
@@ -166,7 +169,7 @@
         </div>
       {% endfor %}
     </div>
-  </div>
+  </details>
 
   <div class="card-box sn-section" id="code-card">
     <div class="card-h">Code</div>
