@@ -11,38 +11,166 @@
 {% endblock %}
 
 {% block content %}
-<div class="breadcrumb">
-  <a href="{% url 'project_list' %}">Projects</a> <span class="sep">&rsaquo;</span>
-  <a href="{{ project.get_absolute_url }}">{{ project.name }}</a> <span class="sep">&rsaquo;</span>
-  <strong>{% if is_edit %}Edit item{% else %}New item{% endif %}</strong>
-</div>
-
 <form class="item-form" method="post" enctype="multipart/form-data">
   {% csrf_token %}
 
-  <div class="page-head">
+  <div class="sn-topbar">
     <div>
-      <h1>{% if is_edit %}Edit Item{% else %}New Item{% endif %}</h1>
-      <p class="page-sub">Manage content and metadata in {{ project.name }}.</p>
+      <div class="sn-topbar-crumb">
+        <a href="{{ project.get_absolute_url }}">{{ project.name }}</a> <span class="sep">&rsaquo;</span>
+        {% if is_edit %}Edit item{% else %}New item{% endif %}
+      </div>
+      <h1 class="sn-topbar-title">{% if is_edit %}Edit Item{% else %}New Item{% endif %}</h1>
     </div>
-    <div class="segmented" id="kind-switch" data-initial="{{ form.kind.value|default:'code' }}">
-      <button type="button" data-kind="code">Source code</button>
-      <button type="button" data-kind="image">Screenshot</button>
-      <button type="button" data-kind="xml">XML</button>
+    <div class="sn-topbar-actions">
+      <div class="segmented" id="kind-switch" data-initial="{{ form.kind.value|default:'code' }}">
+        <button type="button" data-kind="code">Source code</button>
+        <button type="button" data-kind="image">Screenshot</button>
+        <button type="button" data-kind="xml">XML</button>
+      </div>
+      <a class="btn secondary" href="{% if is_edit %}{{ item.get_absolute_url }}{% else %}{{ project.get_absolute_url }}{% endif %}">Cancel</a>
+      {% if not is_edit %}
+        <button class="btn secondary" type="submit" name="save_and_add" value="1">Save &amp; add another</button>
+      {% endif %}
+      <button class="btn" type="submit">{% if is_edit %}Save Changes{% else %}Save{% endif %}</button>
     </div>
   </div>
   <div style="display:none">{{ form.kind }}</div>
 
   {{ form.non_field_errors }}
 
-  <div class="form-grid">
-    <div class="form-main">
+  <div class="card-box sn-section">
+    <div class="card-h">General</div>
+    <div class="card-body sn-grid">
       {{ form.title.errors }}
-      <div class="field">
+      <div class="field span-2">
         <label for="id_title">Title</label>
         {{ form.title }}
       </div>
 
+      {{ form.script_type.errors }}
+      <div class="field" id="script-type-field">
+        <label for="id_script_type">Script Type</label>
+        {{ form.script_type }}
+      </div>
+
+      {{ form.related_to.errors }}
+      <div class="field" id="related-field">
+        <label for="id_related_to">Attach to Script <span class="helptext" style="display:inline">(screenshot context)</span></label>
+        {{ form.related_to }}
+      </div>
+
+      <div id="identifier-area" class="span-2">
+        {{ form.identifier.errors }}
+        <div class="check-row">
+          {{ form.identifier_is_manual }}
+          <label for="id_identifier_is_manual">Set identifier manually</label>
+        </div>
+        <div class="subfield" id="identifier-field">
+          {{ form.identifier }}
+          <span class="helptext">API name other scripts use to call this one. Unchecked = auto-detect from the code.</span>
+        </div>
+      </div>
+
+      <div id="dropzone" class="dropzone span-2">
+        <div class="dz-label">
+          <strong>Drag and drop file here</strong>
+          paste a screenshot with Ctrl+V / Cmd+V
+        </div>
+        <div class="dz-sub">Supports .xml, .png, .jpg</div>
+      </div>
+
+      {{ form.upload.errors }}
+      <div class="field span-2" id="upload-field">
+        {{ form.upload }}
+        {% if is_edit and item.upload %}
+          <span class="helptext">Current: {{ item.filename }} (new file replaces it)</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card-box sn-section" id="properties-card">
+    <div class="card-h">Properties</div>
+    <div class="card-body sn-grid">
+      {{ form.sub_type.errors }}
+      <div class="field sn-field" id="subtype-field">
+        <label for="id_sub_type" id="subtype-label">Type</label>
+        {{ form.sub_type }}
+      </div>
+
+      {{ form.table_name.errors }}
+      <div class="field sn-field" id="table-field">
+        <label for="id_table_name">Table</label>
+        {{ form.table_name }}
+      </div>
+
+      {{ form.field_name.errors }}
+      <div class="field sn-field" id="fieldname-field">
+        <label for="id_field_name">Field name <span class="helptext" style="display:inline">(onChange)</span></label>
+        {{ form.field_name }}
+      </div>
+
+      {{ form.br_order.errors }}
+      <div class="field sn-field" id="order-field">
+        <label for="id_br_order">Order</label>
+        {{ form.br_order }}
+      </div>
+
+      {{ form.operations.errors }}
+      <div class="field sn-field" id="operations-field">
+        <label for="id_operations">Operations</label>
+        {{ form.operations }}
+      </div>
+
+      {{ form.client_callable.errors }}
+      <div class="check-row sn-field" id="callable-field">
+        {{ form.client_callable }}
+        <label for="id_client_callable">Client callable (GlideAjax)</label>
+      </div>
+
+      {{ form.api_endpoint.errors }}
+      <div class="field sn-field" id="endpoint-field">
+        <label for="id_api_endpoint">Endpoint</label>
+        {{ form.api_endpoint }}
+      </div>
+
+      {{ form.condition.errors }}
+      <div class="field sn-field span-2" id="condition-field">
+        <label for="id_condition">Condition</label>
+        {{ form.condition }}
+      </div>
+
+      {% for script_type, group in form.extra_field_groups.items %}
+        <div class="sn-extra-group" data-extra-type="{{ script_type }}">
+          {% for entry in group %}
+            {% if entry.def.type == "boolean" %}
+              <div class="check-row">
+                {{ entry.field }}
+                <label for="{{ entry.field.id_for_label }}">{{ entry.def.label }}</label>
+              </div>
+            {% elif entry.def.type == "textarea" %}
+              <div class="field span-2">
+                <label for="{{ entry.field.id_for_label }}">{{ entry.def.label }}</label>
+                {{ entry.field }}
+                {% if entry.def.help %}<span class="helptext">{{ entry.def.help }}</span>{% endif %}
+              </div>
+            {% else %}
+              <div class="field">
+                <label for="{{ entry.field.id_for_label }}">{{ entry.def.label }}</label>
+                {{ entry.field }}
+                {% if entry.def.help %}<span class="helptext">{{ entry.def.help }}</span>{% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card-box sn-section" id="code-card">
+    <div class="card-h">Code</div>
+    <div class="card-body">
       {{ form.html_content.errors }}
       <div class="field code-part" id="html-part">
         <label for="id_html_content" data-part-label>HTML (Jelly)</label>
@@ -89,7 +217,7 @@
       </div>
 
       {{ form.content.errors }}
-      <div class="field" id="content-field">
+      <div class="field" id="content-field" style="margin-bottom:0">
         <label for="id_content" id="content-label">Script</label>
         <div class="editor-card">
           <div class="editor-toolbar" data-editor-for="id_content">
@@ -106,136 +234,19 @@
           {{ form.content }}
         </div>
       </div>
+    </div>
+  </div>
 
+  <div class="card-box sn-section">
+    <div class="card-h">Notes</div>
+    <div class="card-body">
       {{ form.note.errors }}
-      <div class="field">
+      <div class="field" style="margin-bottom:0">
         <label for="id_note">Internal Notes</label>
         {{ form.note }}
         <span class="helptext">Optional: context or the question you want to ask Claude.</span>
       </div>
     </div>
-
-    <aside class="form-side">
-      <div class="card-box">
-        <div class="card-h">Metadata</div>
-        <div class="card-body">
-          {{ form.script_type.errors }}
-          <div class="field" id="script-type-field">
-            <label for="id_script_type">Script Type</label>
-            {{ form.script_type }}
-          </div>
-
-          {{ form.sub_type.errors }}
-          <div class="field sn-field" id="subtype-field">
-            <label for="id_sub_type" id="subtype-label">Type</label>
-            {{ form.sub_type }}
-          </div>
-
-          {{ form.table_name.errors }}
-          <div class="field sn-field" id="table-field">
-            <label for="id_table_name">Table</label>
-            {{ form.table_name }}
-          </div>
-
-          {{ form.field_name.errors }}
-          <div class="field sn-field" id="fieldname-field">
-            <label for="id_field_name">Field name <span class="helptext" style="display:inline">(onChange)</span></label>
-            {{ form.field_name }}
-          </div>
-
-          {{ form.br_order.errors }}
-          <div class="field sn-field" id="order-field">
-            <label for="id_br_order">Order</label>
-            {{ form.br_order }}
-          </div>
-
-          {{ form.operations.errors }}
-          <div class="field sn-field" id="operations-field">
-            <label for="id_operations">Operations</label>
-            {{ form.operations }}
-          </div>
-
-          {{ form.condition.errors }}
-          <div class="field sn-field" id="condition-field">
-            <label for="id_condition">Condition</label>
-            {{ form.condition }}
-          </div>
-
-          {{ form.client_callable.errors }}
-          <div class="check-row sn-field" id="callable-field">
-            {{ form.client_callable }}
-            <label for="id_client_callable">Client callable (GlideAjax)</label>
-          </div>
-
-          {{ form.api_endpoint.errors }}
-          <div class="field sn-field" id="endpoint-field">
-            <label for="id_api_endpoint">Endpoint</label>
-            {{ form.api_endpoint }}
-          </div>
-
-          {% for script_type, group in form.extra_field_groups.items %}
-            <div class="sn-extra-group" data-extra-type="{{ script_type }}">
-              {% for entry in group %}
-                {% if entry.def.type == "boolean" %}
-                  <div class="check-row">
-                    {{ entry.field }}
-                    <label for="{{ entry.field.id_for_label }}">{{ entry.def.label }}</label>
-                  </div>
-                {% else %}
-                  <div class="field">
-                    <label for="{{ entry.field.id_for_label }}">{{ entry.def.label }}</label>
-                    {{ entry.field }}
-                    {% if entry.def.help %}<span class="helptext">{{ entry.def.help }}</span>{% endif %}
-                  </div>
-                {% endif %}
-              {% endfor %}
-            </div>
-          {% endfor %}
-
-          <div id="identifier-area">
-            {{ form.identifier.errors }}
-            <div class="check-row">
-              {{ form.identifier_is_manual }}
-              <label for="id_identifier_is_manual">Set identifier manually</label>
-            </div>
-            <div class="subfield" id="identifier-field">
-              {{ form.identifier }}
-              <span class="helptext">API name other scripts use to call this one. Unchecked = auto-detect from the code.</span>
-            </div>
-          </div>
-
-          {{ form.related_to.errors }}
-          <div class="field" id="related-field">
-            <label for="id_related_to">Attach to Script <span class="helptext" style="display:inline">(screenshot context)</span></label>
-            {{ form.related_to }}
-          </div>
-
-          <div id="dropzone" class="dropzone">
-            <div class="dz-label">
-              <strong>Drag and drop file here</strong>
-              paste a screenshot with Ctrl+V / Cmd+V
-            </div>
-            <div class="dz-sub">Supports .xml, .png, .jpg</div>
-          </div>
-
-          {{ form.upload.errors }}
-          <div class="field" id="upload-field">
-            {{ form.upload }}
-            {% if is_edit and item.upload %}
-              <span class="helptext">Current: {{ item.filename }} (new file replaces it)</span>
-            {% endif %}
-          </div>
-
-          <div class="side-actions">
-            <a class="btn secondary" href="{% if is_edit %}{{ item.get_absolute_url }}{% else %}{{ project.get_absolute_url }}{% endif %}">Cancel</a>
-            <button class="btn" type="submit">{% if is_edit %}Save Changes{% else %}Save{% endif %}</button>
-          </div>
-          {% if not is_edit %}
-            <button class="btn secondary" type="submit" name="save_and_add" value="1" style="margin-top:10px;width:100%;justify-content:center">Save &amp; add another</button>
-          {% endif %}
-        </div>
-      </div>
-    </aside>
   </div>
 </form>
 {% endblock %}

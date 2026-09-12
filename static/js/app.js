@@ -485,12 +485,31 @@
     }
 
     // Type-specific metadata fields (SCRIPT_TYPE_SCHEMAS on the backend) -
-    // one group per script type, only the matching one is shown.
+    // one group per script type, only the matching one is shown. "contents"
+    // rather than "" so the group itself doesn't become a grid cell in
+    // .sn-grid - its .field/.check-row children become the grid items.
     var extraGroups = document.querySelectorAll(".sn-extra-group");
     for (i = 0; i < extraGroups.length; i++) {
       var extraOn = isCode && extraGroups[i].getAttribute("data-extra-type") === typeSelect.value;
-      extraGroups[i].style.display = extraOn ? "" : "none";
+      extraGroups[i].style.display = extraOn ? "contents" : "none";
     }
+
+    // Hide the whole Properties card when the selected type has no
+    // metadata fields at all (e.g. UI Macro, Other) instead of showing an
+    // empty card.
+    var propertiesCard = document.getElementById("properties-card");
+    if (propertiesCard) {
+      var anyPropertyVisible = false;
+      var candidates = propertiesCard.querySelectorAll(".sn-field, .sn-extra-group");
+      for (i = 0; i < candidates.length; i++) {
+        if (candidates[i].style.display !== "none") {
+          anyPropertyVisible = true;
+          break;
+        }
+      }
+      propertiesCard.style.display = anyPropertyVisible ? "" : "none";
+    }
+
     var parts = document.querySelectorAll(".code-part");
     for (i = 0; i < parts.length; i++) {
       var partOn = isCode && (schema.parts || []).indexOf(parts[i].id) !== -1;
@@ -544,6 +563,7 @@
   function applyKind(kind) {
     var zone = document.getElementById("dropzone");
     show(zone, kind !== "code");
+    show(document.getElementById("code-card"), kind !== "image");
     show(document.getElementById("content-field"), kind !== "image");
     show(document.getElementById("language-row"), kind === "code");
     show(document.getElementById("script-type-field"), kind !== "image");
