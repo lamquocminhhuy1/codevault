@@ -65,12 +65,15 @@
         <span class="searchbox" style="max-width:280px">
           <input type="text" id="graph-search" placeholder="Search nodes..." autocomplete="off">
         </span>
+        <button type="button" id="graph-fullscreen" class="btn secondary small" title="Full screen">&#9974; Full screen</button>
       </div>
       <div class="dep-graph-wrap">
         <div id="dep-graph" class="dep-graph"></div>
         <div class="graph-controls">
           <button type="button" id="graph-zoom-in" class="graph-ctrl-btn" title="Zoom in">+</button>
+          <div class="graph-zoom-level" id="graph-zoom-level">100%</div>
           <button type="button" id="graph-zoom-out" class="graph-ctrl-btn" title="Zoom out">&minus;</button>
+          <div class="graph-ctrl-sep"></div>
           <button type="button" id="graph-fit" class="graph-ctrl-btn" title="Fit to screen">&#10021;</button>
         </div>
         <div id="graph-legend" class="graph-legend"></div>
