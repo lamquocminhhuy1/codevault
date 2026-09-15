@@ -1,0 +1,57 @@
+{% extends "lottery/base.html" %}
+{% block title %}Tổng quan - Sổ Vé Số{% endblock %}
+{% block content %}
+<div class="lt-page-head">
+  <h1>Chào {{ user.username }} 👋</h1>
+  <a class="lt-btn lt-btn-primary lt-btn-lg" href="{% url 'lottery:check' %}">🎟️ Dò vé số mới</a>
+</div>
+
+<div class="lt-stat-row">
+  <div class="lt-stat-card">
+    <div class="lt-stat-label">Tổng chi</div>
+    <div class="lt-stat-value">{{ totals.total_spent|floatformat:0 }}đ</div>
+  </div>
+  <div class="lt-stat-card">
+    <div class="lt-stat-label">Tổng thắng</div>
+    <div class="lt-stat-value lt-good">{{ totals.total_payout|floatformat:0 }}đ</div>
+  </div>
+  <div class="lt-stat-card">
+    <div class="lt-stat-label">Lãi / Lỗ ròng</div>
+    <div class="lt-stat-value {% if totals.net >= 0 %}lt-good{% else %}lt-bad{% endif %}">
+      {{ totals.net|floatformat:0 }}đ
+    </div>
+  </div>
+  <div class="lt-stat-card">
+    <div class="lt-stat-label">% Lợi nhuận</div>
+    <div class="lt-stat-value {% if totals.profit_percent >= 0 %}lt-good{% else %}lt-bad{% endif %}">
+      {{ totals.profit_percent|floatformat:1 }}%
+    </div>
+  </div>
+</div>
+
+<div class="lt-card">
+  <div class="lt-card-h">Vé gần đây</div>
+  {% if recent %}
+    <table class="lt-table">
+      <thead><tr><th>Số</th><th>Đài</th><th>Ngày</th><th>Kết quả</th></tr></thead>
+      <tbody>
+        {% for t in recent %}
+          <tr>
+            <td class="lt-mono">{{ t.number }}</td>
+            <td>{{ t.station }}</td>
+            <td>{{ t.draw_date }}</td>
+            <td>
+              {% if not t.is_checked %}<span class="lt-badge lt-badge-pending">Chưa có KQ</span>
+              {% elif t.is_winner %}<span class="lt-badge lt-badge-win">Trúng {{ t.matched_tier.label }}</span>
+              {% else %}<span class="lt-badge lt-badge-lose">Trượt</span>{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <a href="{% url 'lottery:ticket_list' %}" class="lt-link">Xem tất cả &rsaquo;</a>
+  {% else %}
+    <p class="lt-empty">Chưa có vé nào. <a href="{% url 'lottery:check' %}">Dò vé đầu tiên của bạn</a>.</p>
+  {% endif %}
+</div>
+{% endblock %}

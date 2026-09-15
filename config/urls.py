@@ -88,4 +88,8 @@ urlpatterns = [
     path("item/<uuid:uid>/delete/", views.item_delete, name="item_delete"),
     path("item/<uuid:uid>/raw/", views.item_raw, name="item_raw"),
     path("media/<path:path>", views.serve_media, name="serve_media"),
+    # Public "check my lottery ticket" app - separate templates/branding/auth
+    # from the vault above; see lottery/urls.py. Never touches vault's
+    # owner-scoped data.
+    path("xoso/", include(("lottery.urls", "lottery"), namespace="lottery")),
 ]

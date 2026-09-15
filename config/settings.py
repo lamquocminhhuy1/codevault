@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "oauth2_provider",
     "mcp_server",
     "vault",
+    "lottery",
 ]
 
 MIDDLEWARE = [

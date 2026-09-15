@@ -1,0 +1,94 @@
+{% extends "lottery/base.html" %}
+{% load static %}
+{% block title %}Dò vé số - Sổ Vé Số{% endblock %}
+
+{% block content %}
+<div class="lt-page-head">
+  <h1>Dò vé số</h1>
+</div>
+
+<div class="lt-check-grid">
+  <div class="lt-card lt-check-form-card">
+    <div class="lt-segmented" id="entry-mode">
+      <button type="button" data-mode="manual" class="active">✍️ Nhập tay</button>
+      <button type="button" data-mode="scan">📷 Quét ảnh</button>
+    </div>
+
+    <div id="scan-panel" class="lt-scan-panel" hidden>
+      <label class="lt-scan-dropzone" for="id_scan_input">
+        <span id="scan-preview-placeholder">📷 Chạm để chụp hoặc chọn ảnh vé số</span>
+        <img id="scan-preview" alt="" hidden>
+      </label>
+      <input type="file" accept="image/*" capture="environment" id="id_scan_input" hidden>
+      <p class="lt-hint" id="scan-status"></p>
+    </div>
+
+    <form method="post" id="ticket-form" class="lt-form" action="{% url 'lottery:check' %}">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <div class="lt-field">
+        <label for="{{ form.number.id_for_label }}">Số vé (dãy số in trên vé)</label>
+        {{ form.number }}
+        {{ form.number.errors }}
+      </div>
+      <div class="lt-field-row">
+        <div class="lt-field">
+          <label for="{{ form.station.id_for_label }}">Đài</label>
+          {{ form.station }}
+        </div>
+        <div class="lt-field">
+          <label for="{{ form.draw_date.id_for_label }}">Ngày xổ</label>
+          {{ form.draw_date }}
+        </div>
+      </div>
+      <div class="lt-field">
+        <label for="{{ form.cost.id_for_label }}">Số tiền đã chi (đ)</label>
+        {{ form.cost }}
+      </div>
+      <button type="submit" class="lt-btn lt-btn-primary lt-btn-block lt-btn-lg" id="check-submit-btn">
+        🔍 Dò kết quả
+      </button>
+    </form>
+  </div>
+
+  <div class="lt-card lt-result-card" id="result-panel" hidden>
+    <div class="lt-result-state" id="state-checking">
+      <div class="lt-reel" id="reel">
+        <span class="lt-reel-digit">0</span><span class="lt-reel-digit">0</span>
+        <span class="lt-reel-digit">0</span><span class="lt-reel-digit">0</span>
+        <span class="lt-reel-digit">0</span><span class="lt-reel-digit">0</span>
+      </div>
+      <p class="lt-checking-msg">Đang dò vé số...</p>
+    </div>
+
+    <div class="lt-result-state" id="state-win" hidden>
+      <canvas id="confetti-canvas" class="lt-confetti-canvas"></canvas>
+      <div class="lt-result-emoji lt-bounce">🎉</div>
+      <h2 class="lt-result-title lt-good">TRÚNG THƯỞNG!</h2>
+      <p class="lt-result-tier" id="win-tier"></p>
+      <p class="lt-result-amount lt-good" id="win-amount"></p>
+    </div>
+
+    <div class="lt-result-state" id="state-lose" hidden>
+      <div class="lt-result-emoji lt-shake">😅</div>
+      <h2 class="lt-result-title">Chưa trúng lần này</h2>
+      <p class="lt-consolation" id="lose-caption"></p>
+    </div>
+
+    <div class="lt-result-state" id="state-pending" hidden>
+      <div class="lt-result-emoji">⏳</div>
+      <h2 class="lt-result-title">Kết quả chưa có</h2>
+      <p>Đài/ngày này chưa có kết quả trong hệ thống. Vé vẫn được lưu, thử dò lại sau nhé.</p>
+    </div>
+
+    <button type="button" class="lt-btn lt-btn-block" id="check-again-btn">Dò vé khác</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'js/lottery-animations.js' %}"></script>
+  <script src="{% static 'vendor/ocrad/ocrad.js' %}"></script>
+  <script src="{% static 'js/lottery-ocr.js' %}"></script>
+  <script src="{% static 'js/lottery-check.js' %}"></script>
+{% endblock %}

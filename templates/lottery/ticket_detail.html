@@ -1,0 +1,26 @@
+{% extends "lottery/base.html" %}
+{% block title %}Vé {{ ticket.number }} - Sổ Vé Số{% endblock %}
+{% block content %}
+<div class="lt-page-head">
+  <h1>Vé {{ ticket.number }}</h1>
+  <a class="lt-btn" href="{% url 'lottery:ticket_list' %}">&larr; Lịch sử</a>
+</div>
+
+<div class="lt-card lt-ticket-detail">
+  <dl class="lt-prop-list">
+    <dt>Đài</dt><dd>{{ ticket.station }}</dd>
+    <dt>Ngày xổ</dt><dd>{{ ticket.draw_date }}</dd>
+    <dt>Chi phí</dt><dd>{{ ticket.cost }}đ</dd>
+    <dt>Trạng thái</dt>
+    <dd>
+      {% if not ticket.is_checked %}<span class="lt-badge lt-badge-pending">Chưa có KQ</span>
+      {% elif ticket.is_winner %}<span class="lt-badge lt-badge-win">Trúng {{ ticket.matched_tier.label }} (số {{ ticket.matched_number }})</span>
+      {% else %}<span class="lt-badge lt-badge-lose">Trượt</span>{% endif %}
+    </dd>
+    {% if ticket.is_checked %}
+      <dt>Tiền thắng</dt><dd>{{ ticket.payout_amount }}đ</dd>
+      <dt>Lãi/Lỗ</dt><dd class="{% if ticket.net >= 0 %}lt-good{% else %}lt-bad{% endif %}">{{ ticket.net }}đ</dd>
+    {% endif %}
+  </dl>
+</div>
+{% endblock %}

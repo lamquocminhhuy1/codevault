@@ -1,0 +1,52 @@
+{% load static %}<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Sổ Vé Số{% endblock %}</title>
+  <link rel="icon" href="{% static 'img/lottery-favicon.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'css/lottery.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header class="lt-topbar">
+    <a class="lt-brand" href="{% url 'lottery:home' %}">
+      <span class="lt-logo">🎟️</span>
+      <span>
+        <span class="lt-brand-name">Sổ Vé Số</span>
+        <span class="lt-brand-sub">Kênh đầu tư rủi ro cao 😄</span>
+      </span>
+    </a>
+    <nav class="lt-nav">
+      {% if user.is_authenticated %}
+        <a class="lt-nav-link" href="{% url 'lottery:check' %}">Dò vé số</a>
+        <a class="lt-nav-link" href="{% url 'lottery:ticket_list' %}">Lịch sử</a>
+        <a class="lt-nav-link" href="{% url 'lottery:stats' %}">Thống kê</a>
+        <form method="post" action="{% url 'lottery:logout' %}" class="lt-inline-form">
+          {% csrf_token %}
+          <button type="submit" class="lt-nav-link lt-btn-link">Đăng xuất ({{ user.username }})</button>
+        </form>
+      {% else %}
+        <a class="lt-nav-link" href="{% url 'lottery:login' %}">Đăng nhập</a>
+        <a class="lt-btn lt-btn-primary" href="{% url 'lottery:signup' %}">Đăng ký</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main class="lt-container">
+    {% if messages %}
+      <ul class="lt-messages">
+        {% for message in messages %}<li class="{{ message.tags }}">{{ message }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="lt-footer">
+    <p>Kết quả tổng hợp tự động, chỉ mang tính tham khảo — luôn đối chiếu với vé số thật của bạn.</p>
+  </footer>
+
+  <script src="{% static 'js/lottery.js' %}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

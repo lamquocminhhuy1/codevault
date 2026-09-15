@@ -1,0 +1,20 @@
+{% extends "lottery/base.html" %}
+{% block title %}Đăng nhập - Sổ Vé Số{% endblock %}
+{% block content %}
+<div class="lt-auth-card">
+  <h1>Đăng nhập</h1>
+  <form method="post" class="lt-form">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <div class="lt-field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+      </div>
+    {% endfor %}
+    <button class="lt-btn lt-btn-primary lt-btn-block" type="submit">Đăng nhập</button>
+  </form>
+  <p class="lt-auth-alt">Chưa có tài khoản? <a href="{% url 'lottery:signup' %}">Đăng ký</a></p>
+</div>
+{% endblock %}

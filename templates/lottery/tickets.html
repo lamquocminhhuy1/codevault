@@ -1,0 +1,48 @@
+{% extends "lottery/base.html" %}
+{% block title %}Lịch sử vé - Sổ Vé Số{% endblock %}
+{% block content %}
+<div class="lt-page-head">
+  <h1>Lịch sử vé</h1>
+  <a class="lt-btn lt-btn-primary" href="{% url 'lottery:check' %}">🎟️ Dò vé mới</a>
+</div>
+
+<form method="get" class="lt-filters">
+  <select name="station">
+    <option value="">Tất cả đài</option>
+    {% for s in stations %}
+      <option value="{{ s }}" {% if s == station %}selected{% endif %}>{{ s }}</option>
+    {% endfor %}
+  </select>
+  <label class="lt-check-row">
+    <input type="checkbox" name="won" value="1" {% if won_only %}checked{% endif %} onchange="this.form.submit()">
+    Chỉ vé trúng
+  </label>
+  <button type="submit" class="lt-btn">Lọc</button>
+</form>
+
+<div class="lt-card">
+  {% if tickets %}
+    <table class="lt-table">
+      <thead><tr><th>Số</th><th>Đài</th><th>Ngày xổ</th><th>Chi phí</th><th>Kết quả</th><th>Lãi/Lỗ</th></tr></thead>
+      <tbody>
+        {% for t in tickets %}
+          <tr>
+            <td class="lt-mono">{{ t.number }}</td>
+            <td>{{ t.station }}</td>
+            <td>{{ t.draw_date }}</td>
+            <td>{{ t.cost }}đ</td>
+            <td>
+              {% if not t.is_checked %}<span class="lt-badge lt-badge-pending">Chưa có KQ</span>
+              {% elif t.is_winner %}<span class="lt-badge lt-badge-win">Trúng {{ t.matched_tier.label }}</span>
+              {% else %}<span class="lt-badge lt-badge-lose">Trượt</span>{% endif %}
+            </td>
+            <td class="{% if t.net >= 0 %}lt-good{% else %}lt-bad{% endif %}">{{ t.net }}đ</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="lt-empty">Không có vé nào khớp bộ lọc.</p>
+  {% endif %}
+</div>
+{% endblock %}

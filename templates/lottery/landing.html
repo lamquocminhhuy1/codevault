@@ -1,0 +1,33 @@
+{% extends "lottery/base.html" %}
+{% block title %}Sổ Vé Số - Dò vé số & theo dõi chi tiêu{% endblock %}
+{% block content %}
+<section class="lt-hero">
+  <h1>Dò vé số miền Nam trong 5 giây 🎉</h1>
+  <p class="lt-hero-sub">
+    Nhập tay hoặc chụp ảnh tờ vé số — hệ thống tự tra kết quả, tính luôn bạn đã chi bao
+    nhiêu, thắng bao nhiêu, và % lợi nhuận từ "kênh đầu tư" nhiều rủi ro này.
+  </p>
+  <div class="lt-hero-actions">
+    <a class="lt-btn lt-btn-primary lt-btn-lg" href="{% url 'lottery:signup' %}">Bắt đầu miễn phí</a>
+    <a class="lt-btn lt-btn-lg" href="{% url 'lottery:login' %}">Tôi đã có tài khoản</a>
+  </div>
+</section>
+
+<section class="lt-feature-grid">
+  <div class="lt-feature-card">
+    <div class="lt-feature-ico">📷</div>
+    <h3>Quét ảnh vé số</h3>
+    <p>Chụp ảnh tờ vé, hệ thống tự nhận diện dãy số — bạn chỉ cần xác nhận lại trước khi lưu.</p>
+  </div>
+  <div class="lt-feature-card">
+    <div class="lt-feature-ico">🎯</div>
+    <h3>Tra kết quả tức thì</h3>
+    <p>Chọn đài + ngày, hệ thống đối chiếu với kết quả xổ số chính thức và báo trúng/trượt ngay.</p>
+  </div>
+  <div class="lt-feature-card">
+    <div class="lt-feature-ico">📊</div>
+    <h3>Thống kê chi tiêu</h3>
+    <p>Tổng chi, tổng thắng, lãi/lỗ ròng và % lợi nhuận theo tháng - biết rõ mình đang "đầu tư" ra sao.</p>
+  </div>
+</section>
+{% endblock %}
